@@ -7,14 +7,14 @@ on:
     branches: [ "main" ]
 
 jobs:
-  laravel-tests:
+  continuous-integration:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
       with:
-        php-version: '8.0'
+        php-version: '8.1'
     - uses: actions/checkout@v3
     - name: Copy .env
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
@@ -28,8 +28,25 @@ jobs:
       run: |
         mkdir -p database
         touch database/database.sqlite
-    - name: Execute tests (Unit and Feature tests) via PHPUnit
-      env:
-        DB_CONNECTION: sqlite
-        DB_DATABASE: database/database.sqlite
-      run: vendor/bin/phpunit
+
+    continuous-deployment:
+      runs-on: ubuntu-latest
+        needs: [continuous-integration]
+        if: github.ref == 'refs/heads/main'
+        steps:
+          # Step 1
+          - name: Configure AWS credentials
+            uses: aws-actions/configure-aws-credentials@v1
+            with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: us-east-1
+          # Step 2
+          - name: Create CodeDeploy Deployment
+            id: deploy
+            run: |
+              aws deploy create-deployment \
+                --application-name test1 \
+                --deployment-group-name testgroup \
+                --deployment-config-name CodeDeployDefault.OneAtATime \
+                --github-location repository=${{ github.repository }},commitId=${{ github.sha }}

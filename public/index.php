@@ -1,5 +1,7 @@
 <?php
-
+print("test123");
+phpinfo();
+dd();
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 
