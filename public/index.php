@@ -1,5 +1,5 @@
 <?php
-print("test123");
+print("test23");
 phpinfo();
 dd();
 use Illuminate\Contracts\Http\Kernel;
